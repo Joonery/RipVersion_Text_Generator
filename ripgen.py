@@ -154,14 +154,18 @@ class RIPVERSION_TEXT_GENERATOR :
 
         # 생성된 하나의 긴 문장을 라인 단위로 나누어 출력한다.
         self._export_data()
+
+    def print_output(self) :
         
-        self._print_log("Done!")
+        startidx = endidx = 0
 
-    
-
-
-
-
+        for i in range(self.total_line) :            
+            endidx += self.per_line_size
+            if (i+1 == self.total_line) :
+                print(self.final_text[startidx:])
+            else :
+                print(self.final_text[startidx:endidx])
+            startidx = endidx
 
 
 if __name__ == "__main__" :
@@ -175,9 +179,6 @@ if __name__ == "__main__" :
     PER_LINE_SIZE = 100
     TOTAL_LINE = 8
 
-    # txtt = method6()
-    # print(txtt)
-
     generator = RIPVERSION_TEXT_GENERATOR(PATH_ORIGINAL_TEXT, PATH_TARGET_TEXT, PATH_OUTPUT, MIN_CORPUS_SIZE, DELETE_RATE, TARGET_RATE, PER_LINE_SIZE, TOTAL_LINE)
     generator.run()
-    # print(generator.original_text)
+    generator.print_output()
