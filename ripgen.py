@@ -47,21 +47,27 @@ class RIPVERSION_TEXT_GENERATOR :
     # original_text를 불러온다.
     def _load_data(self) :
         
-        with open(self.paths["ORIGINAL_TEXT"], "r", encoding="UTF8") as f :
-            
-            # 불러온다.
-            self.original_text = self._fast_concat(f.readlines())
-            self.enough_size += self.delete_rate / (len(self.original_text) - self.delete_rate)  # 계산해봤더니 1개씩 삭제할 경우 삭제율에 따라 1 + p/(N-p) 배보다 더 여유가 필요함.
+        try :
+            with open(self.paths["ORIGINAL_TEXT"], "r", encoding="UTF8") as f :
+                
+                # 불러온다.
+                self.original_text = self._fast_concat(f.readlines())
+                self.enough_size += self.delete_rate / (len(self.original_text) - self.delete_rate)  # 계산해봤더니 1개씩 삭제할 경우 삭제율에 따라 1 + p/(N-p) 배보다 더 여유가 필요함.
 
-            # 이때, 총 사이즈가 생성하려는 문장의 enough배가 넘지 않으면
-            if (len(self.original_text) <  self.per_line_size * self.total_line * self.enough_size ) :
-                self._print_log(self.errors["SHORT_ORIGINAL_TEXT"])
-                return 0
-            
-            self.original_text = self.original_text.split()
+                # 이때, 총 사이즈가 생성하려는 문장의 enough배가 넘지 않으면
+                if (len(self.original_text) <  self.per_line_size * self.total_line * self.enough_size ) :
+                    self._print_log(self.errors["SHORT_ORIGINAL_TEXT"])
+                    return 0
+                
+                self.original_text = self.original_text.split()
 
-        with open(self.paths["TARGET_TEXT"], "r", encoding="UTF8") as f :
-            self.target_text = f.readline() # todo : 여기가 항상 단문이라는 보장이 있는지?
+            with open(self.paths["TARGET_TEXT"], "r", encoding="UTF8") as f :
+                self.target_text = f.readline() # todo : 여기가 항상 단문이라는 보장이 있는지?
+
+        except FileNotFoundError :
+            self._print_log(self.errors["NOT_EXISTING_FILE"])
+            return 0
+
 
         return 1
 
@@ -88,7 +94,6 @@ class RIPVERSION_TEXT_GENERATOR :
 
         return result
 
-
     def _export_data(self) :
 
         all_lines = []
@@ -105,12 +110,28 @@ class RIPVERSION_TEXT_GENERATOR :
             for line in all_lines :
                 f.write(line + "\n\n")
 
+    def _is_valid_params(self) :
+
+        if (self.delete_rate < 0 or self.delete_rate > 0.5) :
+            self._print_log(self.errors["NOT_VALID_PARAMETERS"])
+            return 0
+        
+        if (self.target_rate < 0 or self.target_rate >= 1) :
+            self._print_log(self.errors["NOT_VALID_PARAMETERS"])
+            return 0
+
+        return 1
+
     def run(self) :
         
+        # 파라미터 체크
+        if not self._is_valid_params() :
+            return
+
         # 전체 텍스트를 불러와 하나의 문자열 변수로 합친다.
         if not self._load_data() :
             return
-         
+        
         # 총 길이가 line * perlinelen 이 넘기 전까지
         while (len(self.final_text) < self.per_line_size * self.total_line) :
             
@@ -149,8 +170,8 @@ if __name__ == "__main__" :
     PATH_TARGET_TEXT = "data/target.txt"
     PATH_OUTPUT = "data/output.txt"
     MIN_CORPUS_SIZE = 5
-    DELETE_RATE = 0.1
-    TARGET_RATE = 0.3
+    DELETE_RATE = 0.5
+    TARGET_RATE = 0.5
     PER_LINE_SIZE = 100
     TOTAL_LINE = 8
 
